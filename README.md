@@ -3,30 +3,41 @@ _Blog posts which motivated me to compose the project are:_
 * **[Databricks, Engineering blog/tutorial post by Antoine Amend](https://databricks.com/blog/2020/07/10/a-data-driven-approach-to-environmental-social-and-governance.html)**
 * **[Sustainometric blog post, ESG to SDGs](https://sustainometric.com/esg-to-sdgs-connected-paths-to-a-sustainable-future/)**
 
- ## _Abbreviations & Supplementary_ 🔤
-- **ESG** -- [Environmental, Social and Governance](https://www.investopedia.com/terms/e/environmental-social-and-governance-esg-criteria.asp)
-- **SDG** -- [Sustainable Developmental Goals](https://sdgs.un.org/goals)
-- **GRI** -- [Global Reporting Initiative](https://www.globalreporting.org/how-to-use-the-gri-standards/resource-center/)
 
 ## Background
-Sustainability standards refers to the ESG guidelines outlined by GRI. Organisations report their non-financial impacts according to the [GRI framework](https://www.globalreporting.org/how-to-use-the-gri-standards/gri-standards-english-language/) They could be briefed as follows:
-* Environmental - **E** 
-    * building economic growth within environmental degradation limits, i.e., keeping water, soil, air & biodiversity (wildlife) clean
-* Social        - **S**
-    * focusing on maintenance and prosperity of the employees and their communities, 
-* Governance    - **G**
-    * developing ethical standards of administration within the organisation
-</br>
+- Sustainability standards refers to the ESG guidelines outlined by Global Reporting Initiative (GRI) standards. GRI standards is considered one of the most widely used frameworks for ESG reporting among large companies globally, with a majority of the world's largest companies utilizing them to disclose their sustainability impacts.
+- **ESG** reporting could be simplified as follows: 
+    * **E** for  Environmental 
+        * building economic growth within environmental degradation limits, i.e., securing and managing water, soil, air & biodiversity (wildlife)
+    * **S** for Social
+        * focusing on maintenance and prosperity of the employees and their communities, 
+    * **G** for Governance
+        * developing ethical standards of administration within the organisation
 
-## Aim 
-1. **Determine correlation betweeen ESG performance (acc. to GRI?) and Stock performance**
-2. **Develop dashboard to view ESG performance at par with Stock performance**
+>NOTE!  Please refer to the following for more information:
+>  - [GRI framework](https://www.globalreporting.org/how-to-use-the-gri-standards/gri-standards-english-language/)
+>  - [Global Reporting Initiative - Wikipedia](https://en.wikipedia.org/wiki/Global_Reporting_Initiative)
+>  - [GRI Standards - Guide for US companies](https://www.sweep.net/blog/gri-standards-a-guide-for-us-companies)
+
+---
+
+#### Keywords
+- **ESG** - [Environmental, Social and Governance - Investopedia](https://www.investopedia.com/terms/e/environmental-social-and-governance-esg-criteria.asp)
+- **SDG** - [Sustainable Developmental Goals - UN Goals](https://sdgs.un.org/goals)
+- **GRI** - [Global Reporting Initiative](https://www.globalreporting.org/how-to-use-the-gri-standards/resource-center/)
+- **H<sub>0</sub>** - Null Hypothesis
+- **H<sub>A</sub>** - Alternative Hypothesis
+
+---
+
+## Aim
+Global Top 100 best performing companies as evaluated and reported by the PwC for the current and previous years will be processed to determine the **Correlation betweeen Company ESG report (in accordance with GRI standards) and Stock performance**. This evaluation could also be visualised via **Dashboard to view Company Stock price movement and key moments in relation to ESG report**.
 
 ## _Hypothesis_ 🏷️
-### **Traditional Growth Model (H0)**
+### **Traditional Growth Model (H<sub>0</sub>)**
 _Value creation & ESG Reporting by Organisations do NOT CORRELATE with GRI standards and sometimes stagnates performance_</br>
 
-### **Modern Growth Model (HA)**
+### **Modern Growth Model (H<sub>A</sub>)**
 _Value creation & ESG Reporting by Organisations do CORRELATE with GRI standards and leads to resilient performance_</br>
 
 
