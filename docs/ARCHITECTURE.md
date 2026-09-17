@@ -10,23 +10,31 @@
 ## High-Level Architecture
 
 ```mermaid
-sequenceDiagram
-    participant Reports as PDF Reports
-    participant Storage as Object Storage
-    participant NLP as Text Extraction/NLP
-    participant DB as Relational Database
-    participant Analysis as Python/SQL Analysis
-    participant Dashboard
+flowchart TD
+    A1[Forbes Global 2000]
+    A2[Company sustainability reports]
+    A3[Historical stock prices]
+    B[Data acquisition and ingestion]
+    C["PDF storage and metadata<br/>Azure Blob Storage / Local Storage"]
+    D[Text, table and OCR extraction]
+    E["ESG evidence retrieval<br/>Keywords, GRI references, semantic search"]
+    F[LLM-assisted KPI feature extraction]
+    G[Validation, normalisation and data lineage]
+    H["DuckDB<br/>Bronze → Silver → Gold"]
+    I[ESG scoring and stock-performance analysis]
+    J[Streamlit dashboard]
 
-    Reports->>Storage: Upload PDF reports
-    Storage-->>NLP: Provide stored documents
-    NLP->>NLP: Extract and normalize text
-    NLP->>DB: Store structured report data
-    Analysis->>DB: Query report data
-    DB-->>Analysis: Return analysis dataset
-    Analysis->>Analysis: Run Python/SQL analysis
-    Analysis->>Dashboard: Publish metrics and insights
-    Dashboard-->>Analysis: Request refreshed data
+    A1 --> B
+    A2 --> B
+    A3 --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+    I --> J
 ```
 
 ## Data Ingestion Pipeline
