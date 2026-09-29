@@ -8,6 +8,7 @@
     - [Modern Growth Model](#modern-growth-model-ha)
     - [Assumptions](#assumptions)
 - [Methodology](#methodology)
+    - [Tools and Technologies](#tools--technologies)
     - [Data Acquisition & Ingestion Pipeline](#data-acquisition--ingestion-pipeline)
     - [ESG KPIs Structure](#esg-kpis-structure)
     - [Data Modeling & Backend Architecture](#data-modeling--backend-architecture)
@@ -69,6 +70,25 @@ This evaluation will then be visualised using a **dashboard to view company stoc
 <hr>
 
 ## Methodology
+### Tools & Technologies
+- Languages: **Python** and **SQL**
+    - **Python** - for data acquisition, ingestion, processing, analysis and visualisation
+    - **DuckDB** - for relational database management and data storage
+- Storage: **Azure Blob Storage** or **Local Storage**
+    - **Azure Blob Storage** - for object storage of PDF reports
+- Data Sources:
+    - **Forbes Global 2000 dataset** - for top 100 companies
+    - **OpenBB MCP Server** - for historical stock price data
+- Visualization:
+    - **Streamlit** - for dashboard visualisation
+- AI/ML:
+    - **LangChain** - for LLM-assisted feature extraction and validation
+    - Feature Extraction - PDF Parsing, OCR, Semantic Search
+- Diagramming:
+    - **Mermaid** - for architecture and workflow visualisation
+- ESG Reporting Framework:
+    - **GRI Standards** - for ESG reporting framework and KPI mapping
+
 ### Data Acquisition & Ingestion Pipeline
 - Using the [Kaggle dataset](https://www.kaggle.com/datasets/ellimaaac/forbes-the-global-2000-companies-2026), Forbes Global 2000, the top 100 companies will be collected to keep the data acquisition process straight forward.
 - For each of the listed company in the top 100 for Forbes Global 2000, annual sustainability reports are collected through automated web search and stored in object storage services.
