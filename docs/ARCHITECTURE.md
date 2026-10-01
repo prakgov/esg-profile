@@ -11,14 +11,14 @@
 
 ```mermaid
 flowchart TD
-    A1[Forbes Global 2000]
-    A2[Company sustainability reports]
-    A3[Historical stock prices]
+    A1["Forbes Global 2000<br/>2025 list, top 100"]
+    A2["Company sustainability reports<br/>2023-2025"]
+    A3["Corporate financials and historical stock prices<br/>OpenBB MCP Server and yfinance, 2023-2025"]
     B[Data acquisition and ingestion]
     C["PDF storage and metadata<br/>Azure Blob Storage / Local Storage"]
     D[Text, table and OCR extraction]
     E["ESG evidence retrieval<br/>Keywords, GRI references, semantic search"]
-    F[LLM-assisted KPI feature extraction]
+    F["LLM-assisted KPI feature extraction<br/>Azure AI Foundry"]
     G[Validation, normalisation and data lineage]
     H["DuckDB<br/>Bronze → Silver → Gold"]
     I[ESG scoring and stock-performance analysis]
@@ -48,8 +48,8 @@ flowchart TD
     D --> E["Store reports in object storage"]
     E --> F["Record company, reporting year, source URL, and checksum"]
 
-    B --> G["Access OpenBB MCP Server"]
-    G --> H["Collect current-year historical stock prices"]
+    B --> G["Access OpenBB MCP Server and yfinance"]
+    G --> H["Collect 2023-2025 corporate financials and historical stock prices"]
     H --> L
 
     F --> I["Bronze layer: raw reports and data"]
@@ -95,9 +95,10 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["Validated ESG KPI scores"] --> B["Prepare datasets"]
-    S["Open BB Historical Stock Data"] --> B
+    S["OpenBB and yfinance financials and historical stock data"] --> B
 
-    B --> C["Calculate stock metrics"]
+    B --> C["Calculate financial and stock metrics"]
+    C --> C0["Sales, profit, assets and market-value growth"]
     C --> C1["Returns"]
     C --> C2["Volatility"]
     C --> C3["Drawdowns"]
@@ -109,7 +110,8 @@ flowchart TD
     D --> D3["Governance pillar score"]
     D --> D4["Overall ESG score"]
 
-    C1 --> E["Control and align data"]
+    C0 --> E["Control and align data"]
+    C1 --> E
     C2 --> E
     C3 --> E
     C4 --> E
