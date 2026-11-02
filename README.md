@@ -24,7 +24,7 @@ ESG scores are built from Tekmon's 25 ESG KPIs, mapped to the GRI Standards and 
 - **Pipeline:** Forbes list → ticker and website resolution → financials and stock prices → sustainability report discovery → KPI extraction and validation → ESG scoring → analysis-ready tables → dashboard.
 - **Purpose:** to prove the pipeline works. Three companies are too few for statistical conclusions, so the pilot dashboard shows data, not correlation results.
 
-The decisions behind the pilot are logged in [DESIGN_DECISIONS.md](docs/DESIGN_DECISIONS.md), and decisions still open are tracked in [RESEARCH.md "Open Decisions"](docs/RESEARCH.md#open-decisions).
+The work plan and its issues are in [PILOT_PLAN.md](docs/PILOT_PLAN.md). The decisions behind the pilot are logged in [DESIGN_DECISIONS.md](docs/DESIGN_DECISIONS.md), and decisions still open are tracked in [RESEARCH.md "Open Decisions"](docs/RESEARCH.md#open-decisions).
 
 <hr>
 
@@ -32,6 +32,7 @@ The decisions behind the pilot are logged in [DESIGN_DECISIONS.md](docs/DESIGN_D
 
 | Document | What it covers |
 |---|---|
+| [PILOT_PLAN.md](docs/PILOT_PLAN.md) | Pilot work plan: pipeline, key design points, dependencies, the GitHub issues for each step, and verification |
 | [RESEARCH.md](docs/RESEARCH.md) | Background, problem statement, hypotheses, scope and constraints, open decisions, and the full methodology (data acquisition, KPI structure, extraction, ESG scoring, analysis workflow) |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Mermaid diagrams of the high-level architecture and each pipeline, plus the recommended project structure and its guidelines |
 | [DESIGN_DECISIONS.md](docs/DESIGN_DECISIONS.md) | Educational, ADR-style log of every design decision: context, alternatives, concepts and trade-offs |

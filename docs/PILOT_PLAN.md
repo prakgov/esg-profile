@@ -94,15 +94,15 @@ One branch and PR per issue. Each issue starts with failing tests (TDD) and upda
 
 | # | Issue | Main decisions |
 |---|---|---|
-| 0 | ISSUE0 Foundations: `.gitignore`, `.gitattributes`, dependencies, pytest/ruff/mypy, config, DuckDB setup, CLI skeleton | [DD-001][dd001], [DD-002][dd002], [DD-011][dd011], [DD-012][dd012] |
-| 1 | ISSUE1 Forbes ingest: Kaggle adapter → `bronze.forbes_list` → `silver.companies` (top N) | [DD-012][dd012], [DD-013][dd013] |
-| 2 | ISSUE2 Identifier resolution: tickers and websites, with the `needs_review` path | [DD-015][dd015] |
-| 3 | ISSUE3 Market data: yfinance adapter → prices and financials, Bronze → Silver | [DD-008][dd008], [DD-009][dd009] |
-| 4 | ISSUE4 Report discovery: SerpApi adapter, PDF download and validation → `bronze.reports` | [DD-003][dd003], [DD-014][dd014] |
-| 5 | ISSUE5 Parse and retrieve: `silver.report_pages` and evidence selection per KPI | [DD-010][dd010], [DD-016][dd016] |
-| 6 | ISSUE6 LLM extraction and validation: `silver.kpi_values` with lineage | [DD-004][dd004], [DD-010][dd010], [DD-016][dd016] |
-| 7 | ISSUE7 Scoring: `gold.kpi_scores`, `gold.esg_scores` | [DD-005][dd005], [DD-016][dd016] |
-| 8 | ISSUE8 Gold and dashboard: `gold.company_year` and the Streamlit page | [DD-007][dd007], [DD-008][dd008] |
+| 0 | [#1](https://github.com/prakgov/esg-profile/issues/1) Foundations: `.gitignore`, `.gitattributes`, dependencies, pytest/ruff/mypy, config, DuckDB setup, CLI skeleton | [DD-001][dd001], [DD-002][dd002], [DD-011][dd011], [DD-012][dd012] |
+| 1 | [#2](https://github.com/prakgov/esg-profile/issues/2) Forbes ingest: Kaggle adapter → `bronze.forbes_list` → `silver.companies` (top N) | [DD-012][dd012], [DD-013][dd013] |
+| 2 | [#3](https://github.com/prakgov/esg-profile/issues/3) Identifier resolution: tickers and websites, with the `needs_review` path | [DD-015][dd015] |
+| 3 | [#4](https://github.com/prakgov/esg-profile/issues/4) Market data: yfinance adapter → prices and financials, Bronze → Silver | [DD-008][dd008], [DD-009][dd009] |
+| 4 | [#5](https://github.com/prakgov/esg-profile/issues/5) Report discovery: SerpApi adapter, PDF download and validation → `bronze.reports` | [DD-003][dd003], [DD-014][dd014] |
+| 5 | [#6](https://github.com/prakgov/esg-profile/issues/6) Parse and retrieve: `silver.report_pages` and evidence selection per KPI | [DD-010][dd010], [DD-016][dd016] |
+| 6 | [#7](https://github.com/prakgov/esg-profile/issues/7) LLM extraction and validation: `silver.kpi_values` with lineage | [DD-004][dd004], [DD-010][dd010], [DD-016][dd016] |
+| 7 | [#8](https://github.com/prakgov/esg-profile/issues/8) Scoring: `gold.kpi_scores`, `gold.esg_scores` | [DD-005][dd005], [DD-016][dd016] |
+| 8 | [#9](https://github.com/prakgov/esg-profile/issues/9) Gold and dashboard: `gold.company_year` and the Streamlit page | [DD-007][dd007], [DD-008][dd008] |
 
 ## Verification
 - `uv run pytest`: unit tests for ticker selection, the scoring rubric, quote validation, return/volatility/drawdown math, and fiscal-year alignment. Integration tests use in-memory DuckDB and recorded fixtures (yfinance and SerpApi JSON, a 2-page PDF). Tests never call the network.
