@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repo has two distinct parts at different levels of maturity:
 
-- **Root (`/README.md`, `/docs/`)** — the project's design document. It defines the research question, scope, methodology, and planned architecture in detail, but describes a pipeline that is **not yet implemented**.
+- **Root (`/README.md`, `/docs/`)** — the project overview (`README.md`) and design documents (`docs/`). `docs/RESEARCH.md` defines the research question, scope, methodology, and planned architecture in detail, but describes a pipeline that is **not yet implemented**.
 - **`esg-profile/`** — the actual Python package, currently just a `uv`-managed scaffold (`src/esg_profile/__init__.py` contains only a placeholder `main()`). No dependencies, tests, or lint config exist yet.
 
 When asked to implement something, treat the root docs as the spec and `esg-profile/` as where the implementation should go.
@@ -25,7 +25,7 @@ No test suite, linter, or formatter is configured yet — `dependencies = []` in
 
 ## Project background and architecture
 
-This project studies the correlation between company ESG (Environmental/Social/Governance) scores and corporate financial performance (primary) and stock performance (secondary) for the top 100 companies in the Forbes Global 2000 (2025 list), for 2023–2025, visualized via a Streamlit dashboard. Full methodology is in `README.md`; diagrams (Mermaid) are in `docs/ARCHITECTURE.md`; the ESG KPI-to-GRI-standard mapping is in `docs/KPI_Breakdown.md`.
+This project studies the correlation between company ESG (Environmental/Social/Governance) scores and corporate financial performance (primary) and stock performance (secondary) for the top 100 companies in the Forbes Global 2000 (2025 list), for 2023–2025, visualized via a Streamlit dashboard. Full methodology is in `docs/RESEARCH.md`; diagrams (Mermaid) and the recommended project structure are in `docs/ARCHITECTURE.md`; the ESG KPI-to-GRI-standard mapping is in `docs/KPI_Breakdown.md`.
 
 ### Planned pipeline (per `docs/ARCHITECTURE.md`)
 
@@ -42,7 +42,7 @@ This project studies the correlation between company ESG (Environmental/Social/G
 - Report period (ESG scores) and financial/stock period (2023–2025) must be explicitly aligned per company fiscal year before analysis.
 - LLM and OCR extraction must stay free (Azure AI Foundry student account): parse text locally first, OCR only scanned pages, cache by checksum/KPI/prompt version, and respect quotas.
 - yfinance is unofficial and temporary: keep it, and the OpenBB MCP Server, behind a provider adapter so either can be replaced.
-- Some open decisions are still unresolved (see "Open Decisions" in `README.md`): market-vulnerability events to mark, Azure quota/OCR page limits, source licensing, the source of the Forbes 2025 list, and Forbes-to-ticker mapping. Check with the user before making an irreversible design choice on any of these.
+- Some open decisions are still unresolved (see "Open Decisions" in `docs/RESEARCH.md`): market-vulnerability events to mark, Azure quota/OCR page limits, source licensing, the source of the Forbes 2025 list, and Forbes-to-ticker mapping. Check with the user before making an irreversible design choice on any of these.
 
 ## Design patterns
 
