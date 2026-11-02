@@ -42,12 +42,17 @@ flowchart LR
 ```
 
 ## Key design points
-- **Config (no hard-coding, [DD-012][dd012]):** `configs/default.toml` holds `top_n`, `fiscal_years = [2023, 2024, 2025]`, the KPI subset, the LLM deployment name, prompt version and paths. Secrets (`KAGGLE_*`, `SERPAPI_API_KEY`, `AZURE_OPENAI_*`) go in `.env`, read with `pydantic-settings`. A committed `.env.example` lists them without values.
+- **Config (no hard-coding, [DD-012][dd012]):** follows the layout in [ARCHITECTURE.md](ARCHITECTURE.md#recommended-project-structure): `configs/` and `data/` sit at the repo root, `sql/` and `tests/` inside the package project `esg-profile/`.
+  - `configs/default.toml` holds `top_n`, `fiscal_years = [2023, 2024, 2025]`, the LLM deployment name, prompt version and paths.
+  - `configs/kpi_mapping.toml` holds the pilot KPI subset (id, pillar, GRI code, keywords).
+  - Relative paths resolve against the repo root, not the current directory, so the CLI behaves the same wherever it runs.
+  - Secrets (`KAGGLE_*`, `SERPAPI_API_KEY`, `AZURE_OPENAI_*`) go in `.env` at the repo root, read with `pydantic-settings`. A committed `.env.example` lists them without values. Each stage checks only the secrets it needs, so offline work needs no keys.
 - **Ports and adapters ([DD-011][dd011], kept proportional):**
   - Ports are `typing.Protocol` interfaces: `CompanyListSource`, `MarketData`, `ReportSearch`, `Extractor`.
   - Adapters: `kaggle/`, `yfinance/`, `serpapi/`, `azure_llm/`, `duckdb/`.
   - Only the folders the pilot needs are created.
-- **Storage ([DD-001][dd001], [DD-002][dd002], [DD-003][dd003]):** DuckDB with Bronze, Silver and Gold schemas; PDFs on local disk named by SHA-256, with the checksum recorded in DuckDB.
+- **Storage ([DD-001][dd001], [DD-002][dd002], [DD-003][dd003]):** DuckDB (`data/warehouse.duckdb`) with Bronze, Silver and Gold schemas, plus a `meta` schema for pipeline bookkeeping; PDFs on local disk named by SHA-256, with the checksum recorded in DuckDB. Schema SQL lives in `esg-profile/sql/<layer>/` and is applied idempotently (`CREATE ... IF NOT EXISTS`).
+- **Run tracking:** `meta.pipeline_runs` records every stage run: `run_id`, `stage`, `started_at` and `finished_at` (UTC), `status` (`running` / `succeeded` / `failed`) and `error`, keyed on `(run_id, stage)`. Created in issue 0.
 - **Ticker resolution, which fails loudly ([DD-015][dd015]):**
   - Run `yf.Search(forbes_name)` and keep only `EQUITY` quotes.
   - Prefer a listing on the exchange of the Forbes company's home country.
@@ -81,11 +86,11 @@ flowchart LR
   - Every table has natural keys, e.g. `(ticker, date)` and `(checksum, kpi_id, prompt_version)`. Writes are upserts.
   - All timestamps are UTC, with `run_id` and `ingested_at`.
   - Bronze is append-only. Silver and Gold are rebuilt from it.
-- **CLI:** `esg-profile run <stage>` and `esg-profile run all`. Stages: `forbes`, `identifiers`, `market`, `reports`, `extract`, `score`, `gold`. The dashboard ([DD-007][dd007]) runs with `streamlit run …/dashboard/app.py`.
+- **CLI (Typer):** `esg-profile run <stage>` and `esg-profile run all`. Stages: `forbes`, `identifiers`, `market`, `reports`, `extract`, `score`, `gold`. `run all` stops at the first failure. Exit codes: 0 success, 1 stage failed, 2 usage or config error. The dashboard ([DD-007][dd007]) runs with `streamlit run …/dashboard/app.py`.
 - **Scripted only ([DD-011][dd011]):** no notebooks; exploration goes through the CLI or `scripts/`.
 
 ## Dependencies
-- **Runtime:** `duckdb`, `yfinance`, `kagglehub`, `httpx`, `pdfplumber`, `langchain-openai`, `pydantic`, `pydantic-settings`, `streamlit`, `plotly`, `pandas`.
+- **Runtime:** `duckdb`, `typer`, `yfinance`, `kagglehub`, `httpx`, `pdfplumber`, `langchain-openai`, `pydantic`, `pydantic-settings`, `streamlit`, `plotly`, `pandas`.
 - **Dev:** `pytest`, `ruff`, `mypy`.
 - SerpApi is called directly with `httpx` against its documented REST endpoint, so it needs no SDK.
 
@@ -94,7 +99,7 @@ One branch and PR per issue. Each issue starts with failing tests (TDD) and upda
 
 | # | Issue | Main decisions |
 |---|---|---|
-| 0 | [#1](https://github.com/prakgov/esg-profile/issues/1) Foundations: `.gitignore`, `.gitattributes`, dependencies, pytest/ruff/mypy, config, DuckDB setup, CLI skeleton | [DD-001][dd001], [DD-002][dd002], [DD-011][dd011], [DD-012][dd012] |
+| 0 | [#1](https://github.com/prakgov/esg-profile/issues/1) Foundations: `.gitignore`, `.gitattributes`, dependencies, pytest/ruff/mypy, config, DuckDB setup with `meta.pipeline_runs`, Typer CLI skeleton | [DD-001][dd001], [DD-002][dd002], [DD-011][dd011], [DD-012][dd012] |
 | 1 | [#2](https://github.com/prakgov/esg-profile/issues/2) Forbes ingest: Kaggle adapter → `bronze.forbes_list` → `silver.companies` (top N) | [DD-012][dd012], [DD-013][dd013] |
 | 2 | [#3](https://github.com/prakgov/esg-profile/issues/3) Identifier resolution: tickers and websites, with the `needs_review` path | [DD-015][dd015] |
 | 3 | [#4](https://github.com/prakgov/esg-profile/issues/4) Market data: yfinance adapter → prices and financials, Bronze → Silver | [DD-008][dd008], [DD-009][dd009] |
