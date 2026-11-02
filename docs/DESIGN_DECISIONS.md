@@ -101,7 +101,7 @@ Per-phase guidance:
 - **Context:** Need to visualize ESG scores against stock performance for a single researcher/small audience, not a production multi-tenant web app.
 - **Decision:** Use Streamlit, a Python script-to-webapp framework.
 - **Alternatives considered:**
-  - *Full web stack (e.g., a frontend framework + REST/GraphQL API backend)* — gives more control over UX and scaling, but is substantial extra engineering. The audience is now defined (researchers, retail investors, portfolio managers, companies; see README "Target Users"), but there is still no concurrency or hosting requirement that would justify it. Revisit if that changes.
+  - *Full web stack (e.g., a frontend framework + REST/GraphQL API backend)* — gives more control over UX and scaling, but is substantial extra engineering. The audience is now defined (researchers, retail investors, portfolio managers, companies; see [RESEARCH.md "Target Users"](RESEARCH.md#target-users)), but there is still no concurrency or hosting requirement that would justify it. Revisit if that changes.
 - **Concepts:** Illustrates matching **architectural investment to actual audience/scale** — a full client-server web architecture (with its own API design, auth, and deployment topology) is a distributed-systems problem Streamlit sidesteps entirely by running as a single Python process that renders directly from DataFrames.
 - **Trade-offs:** Very fast to build and iterate, but harder to scale to many concurrent users or to decouple frontend/backend later if the audience grows beyond the current single-node assumption.
 
@@ -128,7 +128,7 @@ Per-phase guidance:
   - *OpenBB MCP Server only (DD-006)* — keeps one integration, but may not cover all four financial metrics for every company.
   - *Paid data vendor API* — more reliable and licensed, but conflicts with the free-cost constraint.
 - **Concepts:** The **adapter pattern** (a **ports-and-adapters** boundary) isolates pipeline code from volatile external dependencies, so a source can be swapped without touching downstream code. Keeping raw responses in Bronze (DD-001) means a swap can be replayed rather than re-fetched. Cross-checking two independent sources is a basic **data reconciliation** control, and a retrieval timestamp is needed because vendor-side data can be revised (**non-reproducible source** problem).
-- **Trade-offs:** Resilience and the ability to detect bad data, at the cost of a second integration, reconciliation logic, and handling of disagreements between sources. yfinance's unofficial status and terms of use remain a risk, tracked in README "Open Decisions".
+- **Trade-offs:** Resilience and the ability to detect bad data, at the cost of a second integration, reconciliation logic, and handling of disagreements between sources. yfinance's unofficial status and terms of use remain a risk, tracked in [RESEARCH.md "Open Decisions"](RESEARCH.md#open-decisions).
 
 ## DD-010: Free-tier LLM and OCR extraction on an Azure AI Foundry student account
 
@@ -142,3 +142,16 @@ Per-phase guidance:
   - *Send whole reports to the LLM* — simplest prompt design, but multiplies token use and would exhaust free credit quickly.
 - **Concepts:** **Cost as a design constraint**: the retrieval-then-extract design (a **RAG-style** pattern) bounds token use by the evidence size, not the document size. **Idempotent, cached processing** keyed on content hash means reruns and prompt-only changes don't repeat paid work. **Rate limiting and backpressure** keep the pipeline inside quota, and the **graceful degradation** path (a local OCR fallback) avoids a hard dependency on one vendor's free tier.
 - **Trade-offs:** Zero marginal cost, at the cost of quota-driven throughput limits, a more complex pipeline (local parsing, retrieval, caching, fallback), and dependence on a student credit that can run out. Extraction quality for scanned reports may be lower with a local OCR fallback.
+
+## DD-011: Layered Python package with ports and adapters
+
+- **Phase:** Design
+- **Status:** Accepted
+- **Context:** The planned system combines data acquisition, document extraction, ESG scoring, statistical analysis, DuckDB transformations, and a Streamlit dashboard. External providers and storage options may change, while the scoring and analysis rules should remain testable and reproducible.
+- **Decision:** Organize the Python package around framework-independent domain logic, explicit ports for replaceable dependencies, adapters for external systems, and separate pipeline, analysis, and dashboard modules. Keep SQL transformations under Bronze, Silver, and Gold directories, and keep runtime data and generated artifacts outside the source package. All work, including exploration, is done in scripted, version-controlled, reproducible code; the project uses no notebooks.
+- **Alternatives considered:**
+  - *One flat package of scripts* — quick to start, but mixes provider calls, business rules, and presentation code, making tests and replacements difficult.
+  - *Organize only by technical layer* — separates infrastructure concerns, but hides the end-to-end data workflow and makes pipeline ownership less clear.
+  - *Notebooks, for implementation or exploration* — rejected. Hidden cell state and out-of-order execution make results hard to reproduce, notebook diffs are hard to review, and notebook logic tends to be copied into production code instead of tested once.
+- **Concepts:** This applies **separation of concerns** and **ports and adapters (hexagonal architecture)**. Domain code depends on stable interfaces rather than vendor SDKs. The directory boundaries also mirror the **medallion architecture** in DD-001. Using only scripted entry points (the CLI and `scripts/`) supports **reproducible analytics**: the same command on the same inputs gives the same outputs, with no hidden state between runs.
+- **Trade-offs:** Improves testability, provider replacement, and onboarding, but adds interfaces and directories before the implementation is large. The structure must be kept proportional to the project's size so it does not become ceremony.
