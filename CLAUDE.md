@@ -25,11 +25,11 @@ No test suite, linter, or formatter is configured yet — `dependencies = []` in
 
 ## Project background and architecture
 
-This project studies the correlation between company ESG (Environmental/Social/Governance) scores and corporate financial performance (primary) and stock performance (secondary) for the top 100 companies in the Forbes Global 2000 (2025 list), for 2023–2025, visualized via a Streamlit dashboard. Full methodology is in `docs/RESEARCH.md`; diagrams (Mermaid) and the recommended project structure are in `docs/ARCHITECTURE.md`; the ESG KPI-to-GRI-standard mapping is in `docs/KPI_Breakdown.md`.
+This project studies the correlation between company ESG (Environmental/Social/Governance) scores and corporate financial performance (primary) and stock performance (secondary) for the top 100 companies in the Forbes Global 2000 (2026 list), for 2023–2025, visualized via a Streamlit dashboard. The current focus is a pilot: the top 3 companies through every pipeline stage, selected at runtime with no hard-coded company names or tickers (DD-012 to DD-016 in `docs/DESIGN_DECISIONS.md`). Full methodology is in `docs/RESEARCH.md`; diagrams (Mermaid) and the recommended project structure are in `docs/ARCHITECTURE.md`; the ESG KPI-to-GRI-standard mapping is in `docs/KPI_Breakdown.md`.
 
 ### Planned pipeline (per `docs/ARCHITECTURE.md`)
 
-1. **Data acquisition** — Forbes Global 2000 (Kaggle) for the company list; automated web search for annual sustainability report PDFs; the OpenBB MCP Server and yfinance (unofficial Yahoo Finance API, temporary) for corporate financials (primary) and historical stock prices (secondary), 2023–2025. LLM and OCR extraction run on an Azure AI Foundry student account (must stay free).
+1. **Data acquisition** — Forbes Global 2000 2026 list (Kaggle, via kagglehub) for the company list; tickers and websites resolved at runtime through yfinance search; SerpApi web search for annual sustainability report PDFs; the OpenBB MCP Server and yfinance (unofficial Yahoo Finance API, temporary) for corporate financials (primary) and historical stock prices (secondary), 2023–2025. LLM and OCR extraction run on an Azure AI Foundry student account (must stay free).
 2. **Storage** — lakehouse-style Bronze (raw) → Silver (cleaned) → Gold (analysis-ready) layers in **DuckDB**; PDFs in Azure Blob Storage or local storage, with checksums recorded in the DB.
 3. **ESG feature extraction** — parse text/tables/OCR from reports, retrieve relevant evidence (GRI references, KPI names, semantic search), extract structured KPI values via LLM (LangChain), validate against source evidence, normalize units/periods, and store full data lineage (confidence, source quote, page, model version, validation status) per value.
 4. **ESG scoring** — each of Tekmon's 25 KPIs (10 Environmental, 10 Social, 5 Governance; mapped to GRI standards in `docs/KPI_Breakdown.md`) is scored 0–5 based on disclosure evidence. Pillar scores are weighted averages of KPI scores (equal weights initially); overall ESG score is the weighted average of the three pillar scores (currently 33.3% each). Confidence, disclosure quality, GRI alignment, assurance, and performance are stored as separate columns so missing disclosure is never conflated with poor ESG performance.
@@ -42,7 +42,7 @@ This project studies the correlation between company ESG (Environmental/Social/G
 - Report period (ESG scores) and financial/stock period (2023–2025) must be explicitly aligned per company fiscal year before analysis.
 - LLM and OCR extraction must stay free (Azure AI Foundry student account): parse text locally first, OCR only scanned pages, cache by checksum/KPI/prompt version, and respect quotas.
 - yfinance is unofficial and temporary: keep it, and the OpenBB MCP Server, behind a provider adapter so either can be replaced.
-- Some open decisions are still unresolved (see "Open Decisions" in `docs/RESEARCH.md`): market-vulnerability events to mark, Azure quota/OCR page limits, source licensing, the source of the Forbes 2025 list, and Forbes-to-ticker mapping. Check with the user before making an irreversible design choice on any of these.
+- Some open decisions are still unresolved (see "Open Decisions" in `docs/RESEARCH.md`): market-vulnerability events to mark, Azure quota/OCR page limits, source licensing, and whether scoring-rubric level 5 should include performance. Check with the user before making an irreversible design choice on any of these.
 
 ## Design patterns
 

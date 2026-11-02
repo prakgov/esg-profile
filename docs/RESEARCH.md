@@ -38,7 +38,7 @@ Forbes Global 2000 annually publishes top 2000 global public companies which are
 
 
 ## Objective
-Using the top 100 companies of the Forbes Global 2000 (2025 list) for 2023-2025 we will try to determine the **Correlation betweeen Company ESG scores (calculated in accordance with ESG KPIs based on GRI standards) and Corporate financial performance (primary) and Stock performance (secondary)**. 
+Using the top 100 companies of the Forbes Global 2000 (2026 list) for 2023-2025 we will try to determine the **Correlation betweeen Company ESG scores (calculated in accordance with ESG KPIs based on GRI standards) and Corporate financial performance (primary) and Stock performance (secondary)**. 
 
 This evaluation will then be visualised using a **dashboard to view company financial performance and stock price movement in relation to calculated ESG-scores**.
 
@@ -83,7 +83,8 @@ This evaluation will then be visualised using a **dashboard to view company fina
 - **Companies:** need to benchmark their own disclosure and ESG score against peers and see where their disclosure has gaps.
 
 ### In Scope
-- **Companies:** Top 100 of the Forbes Global 2000 (2025 list).
+- **Companies:** Top 100 of the Forbes Global 2000 (2026 list), selected at runtime from the list (see [DD-012](DESIGN_DECISIONS.md#dd-012-dynamic-pilot-on-the-forbes-2026-list-with-the-full-study-moving-to-2026)).
+- **Pilot:** the top 3 companies first, through every pipeline stage, with a reduced extraction scope of 9 KPIs ([DD-012](DESIGN_DECISIONS.md#dd-012-dynamic-pilot-on-the-forbes-2026-list-with-the-full-study-moving-to-2026), [DD-016](DESIGN_DECISIONS.md#dd-016-pilot-extraction-text-layer-only-keyword-and-gri-retrieval-nine-kpis)).
 - **Period:** 2023-2025 (three years) for all data sources.
 - **Financial data (primary):** sales, profit, assets and market value for 2023-2025, via the OpenBB MCP Server and yfinance (temporary solution).
 - **Stock data (secondary):** daily historical prices for 2023-2025, via the OpenBB MCP Server and yfinance.
@@ -106,7 +107,7 @@ This evaluation will then be visualised using a **dashboard to view company fina
 | Small sample (100 companies × 3 years ≈ 300 company-years) with uneven disclosure | Limits statistical power of correlation and regression | Report associations with confidence intervals; repeat with different disclosure-quality thresholds |
 | Short window (2023-2025, three years) | Few market-vulnerability events and short trends, which limits conclusions about long-term value creation | Mark the vulnerability events that fall inside 2023-2025; present results as associations over this window |
 | Report period differs from financial and stock period | Fiscal-year ends differ between companies; ESG reports cover specific reporting years | Align each report year with the matching fiscal-year financials and stock period before analysis |
-| Market data comes from the OpenBB MCP Server and yfinance, an unofficial Yahoo Finance API (temporary solution) | No SLA for yfinance; rate limits and availability of both sources; possible schema changes; personal-use terms | Keep both behind a provider adapter so either can be replaced; throttle and cache requests; store raw responses, source and retrieval timestamps in Bronze; cross-check the two sources and the Forbes 2025 list values |
+| Market data comes from the OpenBB MCP Server and yfinance, an unofficial Yahoo Finance API (temporary solution) | No SLA for yfinance; rate limits and availability of both sources; possible schema changes; personal-use terms | Keep both behind a provider adapter so either can be replaced; throttle and cache requests; store raw responses, source and retrieval timestamps in Bronze; cross-check the two sources and the Forbes 2026 list values |
 | LLM and OCR extraction must stay free (Azure AI Foundry student account) | Student credit and quotas cap tokens, request rate and OCR pages | Parse text locally first and OCR only scanned pages; retrieve evidence before prompting so only relevant passages reach the LLM; cache by checksum, KPI and prompt version; throttle to quota; check free-tier OCR page limits and keep a local OCR fallback |
 | Companies report in different currencies | Raw sales, profit and assets are not directly comparable | Store the reporting currency; compare using ratios and growth rates, or convert to one currency |
 | Reports are heterogeneous PDFs (tables, scans) | Extraction errors and missing values | OCR, evidence validation loop, confidence and lineage stored per value |
@@ -124,10 +125,12 @@ This evaluation will then be visualised using a **dashboard to view company fina
 - [X] **Human review:** Prakirth Govardhanam.
 - [X] **Cost and rate limits:** LLM and OCR extraction stay free using an Azure AI Foundry student account; OpenBB MCP Server and yfinance request limits still apply.
 - [ ] **Quota check:** confirm the student credit, model quota and OCR page limits before processing reports.
-- [ ] **Source licensing:** terms for storing and processing company PDFs, and the terms of use of OpenBB and yfinance.
+- [ ] **Source licensing:** terms for storing and processing company PDFs, the terms of use of OpenBB, yfinance and SerpApi, and the Forbes terms that the Kaggle dataset's "Other" license points to.
 - [X] **Financial metrics:** sales, profit, assets and market value are the primary dataset, ingested via the OpenBB MCP Server and yfinance.
-- [ ] **Forbes 2025 list source:** the Kaggle dataset referenced earlier is the 2026 list, so a source for the 2025 list is needed.
-- [ ] **Ticker mapping:** how Forbes company names are mapped to Yahoo Finance tickers, and how mismatches are checked.
+- [X] **Forbes list source:** the 2026 list, for the pilot and the full study, from the Kaggle dataset downloaded with kagglehub and snapshotted in Bronze ([DD-012](DESIGN_DECISIONS.md#dd-012-dynamic-pilot-on-the-forbes-2026-list-with-the-full-study-moving-to-2026), [DD-013](DESIGN_DECISIONS.md#dd-013-forbes-2026-list-from-kaggle-downloaded-with-kagglehub)).
+- [X] **Ticker mapping:** resolved at runtime through yfinance search; ambiguous or missing matches stop that company with status `needs_review` for human review ([DD-015](DESIGN_DECISIONS.md#dd-015-runtime-ticker-and-website-resolution-with-a-human-review-stop)).
+- [X] **Report search provider:** SerpApi free plan, behind a replaceable `ReportSearch` interface ([DD-014](DESIGN_DECISIONS.md#dd-014-serpapi-for-sustainability-report-discovery)).
+- [ ] **Scoring rubric level 5:** level 5 includes "showing positive performance", which mixes performance into a disclosure-based score, against the separation in [DD-005](DESIGN_DECISIONS.md#dd-005-separate-disclosure-quality-from-performance-in-the-data-model). Resolve before the scoring stage is built.
 
 [Back to Table of Contents](#table-of-contents)
 
@@ -136,15 +139,16 @@ This evaluation will then be visualised using a **dashboard to view company fina
 <hr>
 
 ### Data Acquisition & Ingestion Pipeline
-- Using the Forbes Global 2000 (2025 list), the top 100 companies will be collected to keep the data acquisition process straight forward. The source of the 2025 list is to be confirmed (the previously referenced [Kaggle dataset](https://www.kaggle.com/datasets/ellimaaac/forbes-the-global-2000-companies-2026) is the 2026 list).
-- For each of the listed company in the top 100 for Forbes Global 2000, annual sustainability reports for 2023-2025 are collected through automated web search and stored in object storage services.
+- Using the Forbes Global 2000 (2026 list), the top 100 companies will be collected to keep the data acquisition process straight forward. The list comes from a [Kaggle dataset](https://www.kaggle.com/datasets/ellimaaac/forbes-the-global-2000-companies-2026), downloaded with kagglehub and stored as an unchanged snapshot ([DD-013](DESIGN_DECISIONS.md#dd-013-forbes-2026-list-from-kaggle-downloaded-with-kagglehub)).
+- Tickers and company websites are resolved at runtime from the company names ([DD-015](DESIGN_DECISIONS.md#dd-015-runtime-ticker-and-website-resolution-with-a-human-review-stop)).
+- For each of the listed company in the top 100 for Forbes Global 2000, annual sustainability reports for 2023-2025 are collected through automated web search (SerpApi, [DD-014](DESIGN_DECISIONS.md#dd-014-serpapi-for-sustainability-report-discovery)) and stored in object storage services.
 
 #### Corporate Financial and Stock Price Data
 - [OpenBB MCP Server](https://docs.openbb.co/odp/python/quickstart/mcp) will be accessed for historical stock price and corporate financial information.
 - [yfinance](https://github.com/ranaroussi/yfinance), an unofficial Yahoo Finance API for Python, is used alongside it as a temporary data source.
 - **Corporate financials (primary):** sales, profit, assets and market value for 2023-2025.
 - **Stock prices (secondary):** daily historical prices for 2023-2025.
-- Raw responses are stored with a retrieval timestamp, and the Forbes 2025 list values are used to cross-check the financials.
+- Raw responses are stored with a retrieval timestamp, and the Forbes 2026 list values are used to cross-check the financials.
 
 #### Data Storage
 - Collected data from the reports will be organized into a lakehouse-style architecture: raw data (Bronze), cleaned/enriched data (Silver), and analysis-ready data (Gold).

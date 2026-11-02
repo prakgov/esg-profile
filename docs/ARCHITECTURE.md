@@ -13,8 +13,8 @@
 
 ```mermaid
 flowchart TD
-    A1["Forbes Global 2000<br/>2025 list, top 100"]
-    A2["Company sustainability reports<br/>2023-2025"]
+    A1["Forbes Global 2000<br/>2026 list, top 100 (Kaggle)"]
+    A2["Company sustainability reports<br/>2023-2025, found via SerpApi"]
     A3["Corporate financials and historical stock prices<br/>OpenBB MCP Server and yfinance, 2023-2025"]
     B[Data acquisition and ingestion]
     C["PDF storage and metadata<br/>Azure Blob Storage / Local Storage"]
@@ -44,13 +44,14 @@ flowchart TD
 ```mermaid
 flowchart TD
     L[("DuckDB")]
-    A["Forbes Global 2000 dataset"] --> B["Select top 100 companies"]
-    B --> C["Automated web search"]
+    A["Forbes Global 2000 2026 dataset<br/>Kaggle snapshot"] --> B["Select top N companies<br/>100 full study, 3 pilot"]
+    B --> R["Resolve tickers and websites<br/>yfinance search, needs_review if ambiguous"]
+    R --> C["Automated web search<br/>SerpApi"]
     C --> D["Collect annual sustainability reports"]
     D --> E["Store reports in object storage"]
     E --> F["Record company, reporting year, source URL, and checksum"]
 
-    B --> G["Access OpenBB MCP Server and yfinance"]
+    R --> G["Access OpenBB MCP Server and yfinance"]
     G --> H["Collect 2023-2025 corporate financials and historical stock prices"]
     H --> L
 

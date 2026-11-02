@@ -116,13 +116,14 @@ Per-phase guidance:
   - *Five-year window (2021-2025)* — more events and more statistical power, but about 500 reports to find and extract, which conflicts with the free-tier extraction constraint (DD-010).
 - **Concepts:** The unit of analysis changes from *company* (cross-section) to *company-year* (**panel data**). The model needs **time as a first-class dimension** (grain: company × fiscal year), **point-in-time alignment** between report year and fiscal year (fiscal-year ends differ, and reports are published months after year-end), and care with **selection and survivorship bias**: the top 100 are chosen on current size, which correlates with financial performance.
 - **Trade-offs:** A stronger test of the hypothesis and 3× more observations (about 300 vs 100), at the cost of 3× more reports to collect and extract, currency and fiscal-year normalization of financials, and a window that is still short for "long-term value creation" claims.
+- **Note:** The company list changed from the Forbes 2025 list to the 2026 list (see DD-012). The financial-performance focus and the 2023-2025 window are unchanged.
 
 ## DD-009: OpenBB MCP Server and yfinance behind a provider adapter
 
 - **Phase:** Design
 - **Status:** Accepted
 - **Context:** Financials and stock prices are needed for 100 companies over 2023-2025. DD-006 chose the OpenBB MCP Server, but its coverage of fundamentals depends on the underlying provider. yfinance, an unofficial Yahoo Finance API for Python, is free and easy to use, but has no SLA and no stability guarantee.
-- **Decision:** Use both the OpenBB MCP Server and yfinance as sources for financials and stock prices. Put them behind a provider adapter (one internal interface, one implementation per source). Treat yfinance as a temporary solution. Store raw responses, the source name and a retrieval timestamp in Bronze, and cross-check values between sources and against the Forbes 2025 list.
+- **Decision:** Use both the OpenBB MCP Server and yfinance as sources for financials and stock prices. Put them behind a provider adapter (one internal interface, one implementation per source). Treat yfinance as a temporary solution. Store raw responses, the source name and a retrieval timestamp in Bronze, and cross-check values between sources and against the Forbes list values (the 2026 list since DD-012).
 - **Alternatives considered:**
   - *yfinance only* — simplest, but drops the MCP integration chosen in DD-006 and leaves a single unofficial source.
   - *OpenBB MCP Server only (DD-006)* — keeps one integration, but may not cover all four financial metrics for every company.
@@ -155,3 +156,71 @@ Per-phase guidance:
   - *Notebooks, for implementation or exploration* — rejected. Hidden cell state and out-of-order execution make results hard to reproduce, notebook diffs are hard to review, and notebook logic tends to be copied into production code instead of tested once.
 - **Concepts:** This applies **separation of concerns** and **ports and adapters (hexagonal architecture)**. Domain code depends on stable interfaces rather than vendor SDKs. The directory boundaries also mirror the **medallion architecture** in DD-001. Using only scripted entry points (the CLI and `scripts/`) supports **reproducible analytics**: the same command on the same inputs gives the same outputs, with no hidden state between runs.
 - **Trade-offs:** Improves testability, provider replacement, and onboarding, but adds interfaces and directories before the implementation is large. The structure must be kept proportional to the project's size so it does not become ceremony.
+
+## DD-012: Dynamic pilot on the Forbes 2026 list, with the full study moving to 2026
+
+- **Phase:** Design
+- **Status:** Accepted
+- **Context:** The design (DD-001 to DD-011) describes a pipeline for 100 companies, but no code exists yet. Building all stages for 100 companies at once would surface integration problems late and spend free-tier quota (DD-010) before the pipeline is proven. Separately, DD-008 named the Forbes 2025 list, but the only free, machine-readable list found is the 2026 list (published with data as of 2026-05-15).
+- **Decision:** Build a pilot first: a thin end-to-end slice through every stage (Forbes list → tickers and websites → financials and prices → report discovery → extraction → scoring → Gold → dashboard) for the **top 3 companies of the Forbes Global 2000 2026 list**, over **fiscal years 2023-2025**. Companies are selected at runtime from the list; no company names or tickers appear in code or configuration. Only the number of companies (`top_n`) and the year window are configurable, so scaling to 100 is a configuration change. The **full study also moves to the 2026 list**. The 2023-2025 window from DD-008 is unchanged.
+- **Alternatives considered:**
+  - *Hand-picked pilot companies* — quickest to start, but hard-codes names and tickers and skips the list-to-ticker resolution step that the full study needs, so the hardest integration problem would stay untested.
+  - *Full 100 companies from the start* — no throwaway scope, but slow feedback, a large quota spend before the pipeline is validated, and many failure points at once.
+  - *Keep the 2025 list for the full study, use 2026 only in the pilot* — keeps DD-008 literally intact, but leaves an unresolved source question and two company lists that the pilot and full study would have to reconcile.
+- **Concepts:** A **walking skeleton** (or vertical slice) is the thinnest version of a system that runs end to end through every component. It surfaces integration risk early, when it is cheap to fix, and every later feature then adds depth to a working pipeline instead of width to unconnected parts. **Configuration over code** keeps run-specific values (how many companies, which years) out of the source, so the same tested code runs at any scale. Note the statistical limit: 3 companies × 3 years is 9 company-years, far too few for correlation or regression to mean anything, so the pilot validates *mechanics*, not the hypothesis. Using the 2026 list for 2023-2025 data also slightly strengthens the **survivorship and look-ahead bias** noted in DD-008: companies are selected on size measured after the analysis window.
+- **Trade-offs:** Early end-to-end feedback, low quota use and one company list for pilot and study, at the cost of a pilot that answers no research question, and some pilot shortcuts (DD-016) that the full study must replace.
+
+## DD-013: Forbes 2026 list from Kaggle, downloaded with kagglehub
+
+- **Phase:** Design
+- **Status:** Accepted
+- **Context:** The pipeline needs the ranked Forbes Global 2000 2026 list as a machine-readable file. Forbes does not publish a free download, and the pipeline must fetch it without manual steps to stay reproducible.
+- **Decision:** Use the [Kaggle dataset "Forbes – The Global 2000 Companies – 2026"](https://www.kaggle.com/datasets/ellimaaac/forbes-the-global-2000-companies-2026) (updated 2026-06-24, about 166 KB), downloaded with the `kagglehub` package using a free Kaggle API token from `.env`. Each download is stored unchanged in Bronze with its retrieval timestamp and SHA-256 checksum, and later stages read only that snapshot.
+- **Alternatives considered:**
+  - *Manual CSV download* — no token or dependency, but a manual step breaks one-command reproducibility.
+  - *Community-scraped CSV on GitHub* — no token needed, but unclear freshness, and the data comes from scraping Forbes.
+  - *Paid spreadsheets (Someka, Databahn)* — likely accurate, but cost money and still need a manual download.
+  - *Scraping forbes.com directly* — always current, but fragile and likely against Forbes' terms.
+- **Concepts:** **Data provenance** records where a dataset came from and when. Storing an **immutable snapshot** with a checksum in Bronze (DD-001) means reruns use exactly the same company list even if the upstream dataset changes, which makes runs **reproducible**; refreshing the list becomes a deliberate act, not a side effect. A third-party dataset is a **secondary source**: its figures should be spot-checked against the primary source (Forbes).
+- **Trade-offs:** Fully automated and reproducible, at the cost of a Kaggle account and token, a dependency on a community upload that could disappear or lag, and unresolved licensing: the dataset's license is "Other" and points to Forbes' terms, so storage and redistribution terms remain an open decision in [RESEARCH.md](RESEARCH.md#open-decisions).
+
+## DD-014: SerpApi for sustainability report discovery
+
+- **Phase:** Design
+- **Status:** Accepted
+- **Context:** Sustainability report PDFs must be found automatically for each company and year. That needs a programmable web search API returning structured results; search APIs designed for AI agents were ruled out by choice. As of 2026-11, the Google Custom Search JSON API is closed to new customers and shuts down on 2027-01-01, and the Brave Search API replaced its free tier with monthly credit that requires a credit card.
+- **Decision:** Use SerpApi's free plan (about 250 searches per month, recurring, no card) to search for reports, calling its documented REST endpoint directly with `httpx` rather than an SDK. Search behind a `ReportSearch` port so the provider can be replaced. Search first within the company's own website domain, then without the domain restriction as a fallback. Store every query and response in Bronze and reuse them on reruns.
+- **Alternatives considered:**
+  - *Google Custom Search JSON API* — closed to new customers, ending 2027-01-01.
+  - *Brave Search API* — independent index, but its free use now requires a credit card.
+  - *Serper.dev* — Google results as JSON, but the 2,500 free queries appear to be a one-time credit.
+  - *Self-hosted SearXNG* — free with no quota and good Docker practice, but results become unreliable when upstream engines block it, and it adds a service to run.
+  - *`ddgs` library* — no key, but an unofficial scraper with an "educational purposes only" disclaimer; it can break without warning and may violate the scraped engines' terms.
+- **Concepts:** Three ways to get search results: a **managed API** (someone else runs it, with documented limits and terms), **self-hosting** (you run it, so no quota but operational burden), and **scraping** (no contract at all, so no stability guarantee). A **quota** is a design constraint like cost: the pipeline must count and cache its calls. **Caching responses** keyed on the query makes reruns **idempotent** and free; the same pattern protects the LLM budget in DD-010.
+- **Trade-offs:** An official, stable API with Google-quality results and enough free quota for the pilot (a few dozen queries), at the cost of an account and API key, a third-party dependency, and a quota that is too small for the full study's roughly 300 company-years without careful caching or a paid plan.
+
+## DD-015: Runtime ticker and website resolution with a human-review stop
+
+- **Phase:** Design
+- **Status:** Accepted
+- **Context:** The Forbes list gives company names and countries, but no stock tickers or websites. Market data needs tickers, and report search needs the company's website domain. DD-012 forbids hard-coded mappings.
+- **Decision:** Resolve identifiers at runtime: search yfinance by company name, keep only equity results, and prefer the listing on an exchange in the company's home country. If exactly one candidate passes, mark it `resolved` and take the website from the ticker's profile. If none or several pass, store all candidates with status `needs_review` and stop processing that company until a person reviews it. Store the method and candidates with each mapping.
+- **Alternatives considered:**
+  - *Hand-maintained mapping table* — accurate, but it is hard-coding by another name and does not scale to 100 companies or future lists.
+  - *Always take the first search result* — fully automatic, but silently picks wrong listings (another share class, a foreign listing, or a different company with a similar name), and every downstream number would then be wrong without any error.
+- **Concepts:** **Entity resolution** (record linkage) is the problem of deciding whether two records refer to the same real-world entity, here a Forbes company name and an exchange listing. It is uncertain by nature, so the design question is what happens when it is uncertain. **Failing loudly** (stopping with a clear status) is preferred over **silent data corruption**, because a wrong match produces plausible-looking but meaningless results. Routing only the uncertain cases to a person is a **human-in-the-loop** pattern: automation handles the clear cases, judgment handles the rest.
+- **Trade-offs:** No hard-coding and no silent mismatches, at the cost of occasional manual review that stalls a company, and a dependency on yfinance's unofficial search, whose results can change over time (mitigated by storing the resolved mapping and its candidates).
+
+## DD-016: Pilot extraction: text layer only, keyword and GRI retrieval, nine KPIs
+
+- **Phase:** Design
+- **Status:** Accepted
+- **Context:** The full extraction design (DD-004, DD-010) includes OCR, semantic search and all 25 KPIs. The pilot (DD-012) needs a working extraction stage, not a complete one, and must stay within the Azure student quota.
+- **Decision:** For the pilot: parse each report's text layer locally with `pdfplumber`, and flag pages with no text instead of running OCR. Select evidence pages per KPI by keyword and GRI-code matching (no embeddings). Send only those pages to the Azure-hosted LLM through LangChain with structured (schema-validated) output. Accept a value only if the quote the model returns appears on the page it cites; otherwise mark it `unvalidated`. Store lineage per value (checksum, page, quote, confidence, model, prompt version, validation status), and cache results by checksum, KPI and prompt version. Extract 9 KPIs, 3 per pillar: CO₂ emissions (GRI 305), energy consumption (GRI 302), renewable energy share (GRI 302); workforce diversity (GRI 405), employee turnover (GRI 401), training hours (GRI 404); board diversity (GRI 405-1), anti-corruption (GRI 205), executive pay linked to ESG (GRI 2-19). Score them with the existing 0-5 rubric in [RESEARCH.md](RESEARCH.md#esg-score-based-on-gri-based-esg-kpis).
+- **Alternatives considered:**
+  - *Embedding-based semantic search* — finds evidence that keyword matching misses, but adds an embedding model, a vector store and more quota use before the basic pipeline is proven.
+  - *OCR every page* — handles scanned reports, but uses OCR quota on pages that already have text and adds a dependency the pilot does not need.
+  - *Send whole reports to the LLM* — simplest prompt, but exhausts the free credit (see DD-010).
+  - *All 25 KPIs* — complete, but more prompts to design and validate before any result exists.
+- **Concepts:** **Retrieval before extraction** (a RAG-style pattern, DD-010) bounds LLM cost by the size of the evidence, not the report. **Grounding** means every extracted value is tied to a verifiable source passage; checking the quote against the page is a cheap, deterministic guard against **hallucinated** values. Cutting scope deliberately (no OCR, fewer KPIs) is **risk management**: each cut is recorded here so the full study knows what to add back.
+- **Trade-offs:** A cheap, fast, verifiable extraction stage, at the cost of missing evidence on scanned pages and in passages that use different wording than the keywords, and ESG scores built from 9 of 25 KPIs, which are not comparable with full-study scores.

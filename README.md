@@ -75,7 +75,8 @@ The full target structure, and the reasoning behind it, are in [ARCHITECTURE.md 
 - Storage: **Azure Blob Storage** or **Local Storage**
     - **Azure Blob Storage** - for object storage of PDF reports
 - Data Sources:
-    - **Forbes Global 2000 dataset (2025 list)** - for top 100 companies
+    - **Forbes Global 2000 dataset (2026 list, via Kaggle)** - for top 100 companies (top 3 in the pilot)
+    - **SerpApi** - web search API for finding sustainability report PDFs
     - **OpenBB MCP Server** - for historical stock price data and corporate financials
     - **yfinance** - unofficial Yahoo Finance API for Python, for corporate financials and historical stock prices (temporary solution)
     - **Company sustainability reports** - PDFs collected through automated web search
